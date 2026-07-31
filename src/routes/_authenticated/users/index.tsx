@@ -1,8 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 
+import { navRights } from '@/components/layout/navigation'
 import { getFindAllUsersQueryOptions } from '@/hooks/data/users'
 import { paginationSearchParamsSchema } from '@/lib/pagination'
+import { requireRights } from '@/lib/route-guards'
 import { UsersListPage } from '@/pages/users/users-list-page'
 
 const usersSearchSchema = paginationSearchParamsSchema.extend({
@@ -13,6 +15,8 @@ const usersSearchSchema = paginationSearchParamsSchema.extend({
 })
 
 export const Route = createFileRoute('/_authenticated/users/')({
+  beforeLoad: ({ context: { queryClient } }) =>
+    requireRights(queryClient, navRights('/users')),
   component: UsersListPage,
   validateSearch: usersSearchSchema,
   loaderDeps: ({ search }) => search,

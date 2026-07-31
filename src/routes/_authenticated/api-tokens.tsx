@@ -1,22 +1,14 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 
-import { getMeOptions } from '@/generated/client/@tanstack/react-query.gen'
+import { navRights } from '@/components/layout/navigation'
 import { getFindAllApiTokensQueryOptions } from '@/hooks/data/api-tokens'
-import { authenticatedClient } from '@/lib/auth-store'
 import { paginationSearchParamsSchema } from '@/lib/pagination'
-import { getUserRights, hasRequiredRights, RIGHTS } from '@/lib/permissions'
+import { requireRights } from '@/lib/route-guards'
 import { ApiTokensListPage } from '@/pages/api-tokens/api-tokens-list-page'
 
 export const Route = createFileRoute('/_authenticated/api-tokens')({
-  beforeLoad: async ({ context: { queryClient } }) => {
-    const user = await queryClient.ensureQueryData(
-      getMeOptions({ client: authenticatedClient }),
-    )
-    if (!hasRequiredRights(getUserRights(user), RIGHTS.API_TOKEN)) {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error
-      throw redirect({ to: '/' })
-    }
-  },
+  beforeLoad: ({ context: { queryClient } }) =>
+    requireRights(queryClient, navRights('/api-tokens')),
   component: ApiTokensListPage,
   validateSearch: paginationSearchParamsSchema,
   loaderDeps: ({ search: { page, size } }) => ({ page, size }),
