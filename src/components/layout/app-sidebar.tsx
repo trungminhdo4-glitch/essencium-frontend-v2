@@ -2,7 +2,7 @@ import { Link, useRouterState } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { NavUser } from '@/components/layout/nav-user'
-import { NAV_ITEMS } from '@/components/layout/navigation'
+import { useNavItems, type NavNode } from '@/components/layout/navigation'
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +12,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from '@/components/ui/sidebar'
 import { usePermissions } from '@/hooks/use-permissions'
 
@@ -19,13 +22,27 @@ function isItemActive(pathname: string, to: string): boolean {
   return to === '/' ? pathname === '/' : pathname.startsWith(to)
 }
 
-/** Primary application sidebar: logo, permission-gated navigation, user menu. */
+function visibleSidebarNodes(
+  nodes: NavNode[],
+  can: (rights: NavNode['rights']) => boolean,
+): NavNode[] {
+  return nodes
+    .map(node => ({
+      ...node,
+      children: visibleSidebarNodes(node.children, can),
+    }))
+    .filter(node => {
+      if (!node.inSidebar || !can(node.rights)) return false
+      return node.navigable || node.children.length > 0
+    })
+}
+
 export function AppSidebar(): React.ReactElement {
   const { t } = useTranslation()
   const { can } = usePermissions()
   const pathname = useRouterState({ select: s => s.location.pathname })
 
-  const visibleItems = NAV_ITEMS.filter(item => can(item.rights))
+  const items = visibleSidebarNodes(useNavItems(), can)
 
   return (
     <Sidebar collapsible="icon">
@@ -45,16 +62,33 @@ export function AppSidebar(): React.ReactElement {
       <SidebarContent>
         <SidebarGroupLabel>{t('navigation.menu')}</SidebarGroupLabel>
         <SidebarMenu>
-          {visibleItems.map(item => (
+          {items.map(item => (
             <SidebarMenuItem key={item.to}>
               <SidebarMenuButton
-                isActive={isItemActive(pathname, item.to ?? '/')}
-                tooltip={t(item.labelKey)}
-                render={<Link to={item.to} />}
+                isActive={
+                  item.navigable && isItemActive(pathname, item.to ?? '/')
+                }
+                tooltip={item.label}
+                {...(item.navigable ? { render: <Link to={item.to} /> } : {})}
               >
                 <item.icon />
-                <span>{t(item.labelKey)}</span>
+                <span>{item.label}</span>
               </SidebarMenuButton>
+              {item.children.length > 0 && (
+                <SidebarMenuSub>
+                  {item.children.map(child => (
+                    <SidebarMenuSubItem key={child.to}>
+                      <SidebarMenuSubButton
+                        isActive={isItemActive(pathname, child.to ?? '/')}
+                        render={<Link to={child.to} />}
+                      >
+                        <child.icon />
+                        <span>{child.label}</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  ))}
+                </SidebarMenuSub>
+              )}
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
