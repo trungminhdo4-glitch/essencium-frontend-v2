@@ -3,6 +3,7 @@ import {
   RiGroupLine,
   RiKeyLine,
   RiShieldCheckLine,
+  RiShieldKeyholeLine,
   type RemixiconComponentType,
 } from '@remixicon/react'
 import type { LinkProps } from '@tanstack/react-router'
@@ -17,6 +18,8 @@ export interface NavItem {
   icon: RemixiconComponentType
   /** Right(s) required to see this item — array means "any of". Omit = always. */
   rights?: Right | readonly Right[]
+  /** Require *every* entry in `rights` instead of any of them. */
+  requiresAll?: boolean
 }
 
 /** Primary sidebar navigation. Order is the display order. */
@@ -37,6 +40,13 @@ export const NAV_ITEMS: readonly NavItem[] = [
     to: '/roles',
     icon: RiShieldCheckLine,
     rights: [RIGHTS.ROLE_READ, RIGHTS.RIGHT_READ],
+  },
+  {
+    labelKey: 'navigation.rights',
+    to: '/rights',
+    icon: RiShieldKeyholeLine,
+    rights: [RIGHTS.ROLE_UPDATE, RIGHTS.RIGHT_READ],
+    requiresAll: true,
   },
   {
     labelKey: 'navigation.apiTokens',

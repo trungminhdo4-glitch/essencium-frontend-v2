@@ -16,10 +16,13 @@ import type {
   FindAll1Error,
   Options,
   PageRole,
+  Update2Error,
+  Update2Response,
   UpdateObjectData,
   UpdateObjectError,
   UpdateObjectResponse,
 } from '@/generated/client'
+import { update2 } from '@/generated/client'
 import {
   create1Mutation,
   delete1Mutation,
@@ -47,14 +50,17 @@ export function useFindAllRoles(
   return useSuspenseQuery(getFindAllRolesQueryOptions(options))
 }
 
+/** All roles (single large page) — for select inputs and the rights matrix columns. */
+export function getAllRolesQueryOptions(): ReturnType<typeof findAll1Options> {
+  return findAll1Options({
+    client: authenticatedClient,
+    query: { page: 0, size: 1000, sort: ['name,asc'] },
+  })
+}
+
 /** All roles (single large page) — for select inputs. */
 export function useAllRoles(): UseSuspenseQueryResult<PageRole, FindAll1Error> {
-  return useSuspenseQuery(
-    findAll1Options({
-      client: authenticatedClient,
-      query: { page: 0, size: 1000, sort: ['name,asc'] },
-    }),
-  )
+  return useSuspenseQuery(getAllRolesQueryOptions())
 }
 
 function useInvalidateRoles(): () => void {
@@ -98,6 +104,32 @@ export function useDeleteRole(): UseMutationResult<
   const invalidate = useInvalidateRoles()
   return useMutation({
     ...delete1Mutation({ client: authenticatedClient }),
+    onSuccess: invalidate,
+  })
+}
+
+export interface UpdateRoleRightsVariables {
+  // path param is role name not id
+  name: string
+  authorities: string[]
+}
+
+export function useUpdateRoleRights(): UseMutationResult<
+  Update2Response,
+  Update2Error,
+  UpdateRoleRightsVariables
+> {
+  const invalidate = useInvalidateRoles()
+  return useMutation({
+    mutationFn: async ({ name, authorities }) => {
+      const { data } = await update2({
+        client: authenticatedClient,
+        path: { name },
+        body: { rights: authorities },
+        throwOnError: true,
+      })
+      return data
+    },
     onSuccess: invalidate,
   })
 }

@@ -63,6 +63,7 @@
     "users": "Benutzer",
     "roles": "Rollen",
     "apiTokens": "API-Tokens",
+    "rights": "Rechte",
     "profile": "Profil",
     "settings": "Einstellungen",
     "logout": "Abmelden"
@@ -240,5 +241,11 @@
   },
   "settings": {
     "title": "Einstellungen"
+  },
+  "rights": {
+    "title": "Rechte",
+    "authority": "Name",
+    "updateSuccess": "Die Rolle wurde erfolgreich geändert.",
+    "updateError": "Die Rolle konnte nicht geändert werden."
   }
 }
